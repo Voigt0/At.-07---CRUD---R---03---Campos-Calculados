@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<?php 
+<?php   
    include_once "conf/default.inc.php";
    require_once "conf/Conexao.php";
-   $title = "Carros";
+   $title = "carros";
    $procurar = isset($_POST["procurar"]) ? $_POST["procurar"] : "";
    $busca = isset($_POST["busca"]) ? $_POST["busca"] : "id";
 ?>
@@ -53,38 +53,28 @@
                 </thead>
                 <tbody>
     <?php
-        $pdo = Conexao::getInstance(); 
-        if($busca == "id"){
-            $consulta = $pdo->query("SELECT * FROM carro 
-                                 WHERE nome LIKE '%$procurar%' 
-                                 ORDER BY id");
+        $type = "LIKE";
+        $procurar = "'%". trim($procurar) ."%'";
+        if($busca != "nome"){
+            $type = "<=";
+            if(is_numeric($procurar) == false){
+                $procurar = 5;
+            }
         }
-        else if($busca == "nome"){
-            $consulta = $pdo->query("SELECT * FROM carro 
-                                 WHERE nome LIKE '%$procurar%' 
-                                 ORDER BY nome");
-        } else if($busca == "valor"){
-            $consulta = $pdo->query("SELECT * FROM carro 
-                                 WHERE valor <= $procurar 
-                                 ORDER BY valor");
-        } else if($busca == "km"){
-            $consulta = $pdo->query("SELECT * FROM carro 
-                                 WHERE km <= $procurar 
-                                 ORDER BY km");
-        }
+        $pdo = Conexao::getInstance();
+        $consulta = $pdo->query("SELECT * FROM carro 
+                                 WHERE $busca $type $procurar
+                                 ORDER BY $busca");
         
             while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
             $anosUso = date("Y")-date("Y", strtotime($linha['dataFabricacao']));
             $mediaKm = $linha['km']/$anosUso;
             $valorRevenda = $linha['valor'];
-            $cor = "black";
             if($anosUso >= 10){
                 $valorRevenda = $valorRevenda-($linha['valor']*0.1);
-                $cor = "red";
             }
             if($linha['km'] >= 100000){
                 $valorRevenda = $valorRevenda-($linha['valor']*0.1);
-                $cor = "red";
             }
     ?>
                     <tr>
@@ -95,7 +85,7 @@
                         <td><?php echo date("d/m/Y", strtotime($linha['dataFabricacao']));?></td>
                         <td><?php echo $anosUso;?></td>
                         <td><?php echo number_format($mediaKm, 1, ',', '.');?></td>
-                        <td style="color:<?php echo $cor; ?>;"><?php echo number_format($valorRevenda, 1, ',', '.');?></td>
+                        <td style="color:<?php if($valorRevenda != $linha['valor']){ echo "red";} ?>;"><?php echo number_format($valorRevenda, 1, ',', '.');?></td>
                     </tr>
     <?php } ?> 
                 </tbody>
